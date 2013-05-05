@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dicewalla: Digital dice</title>
+  <meta name="author" content="Lord Rex">
+  <!-- Styles -->
+	  <link rel="stylesheet" href="css/dice.css">
+  <!-- Script -->
+	  <script src="http://code.jquery.com/jquery.min.js"></script>
+	  <script src="js/jquery-ui-shakeonly.min.js"></script>
+	  <script src="js/dicewalla.js"></script>
+</head>
+<body>
+  <h1>Dicewalla Demo Page</h1>
+  
+  <!-- Input for number of dice -->
+  <section id="dw-controls">
+    <div class="controlgroup">
+    <input type="range" title="How many dice?" name="slider" id="slider" value="10" min="1" max="60" step="1" />
+    </div>
+    
+    <!-- Link to roll the dice -->
+    <a id="dw-rolldice">Roll <span id="sliderCount"></span> Dice</a>
+  </section>
+  
+  <!-- section that contains the dice -->
+  <section id="dw-table">
+    <!-- This is where the magic happens. -->
+  </section>
+  
+  <!-- Hidden input to hold a data value -->
+  <input type="hidden" id="diceCount" value="6" />
+
+</body>
+</html>
