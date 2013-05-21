@@ -1,4 +1,18 @@
 /* Copyright Lord Rex 2012-2013 */
+
+function Die() {
+  this.score = 0;
+}
+
+Die.prototype = {
+  roll: function() {
+  },
+
+  compareTo: function(other) {
+    return other.score - this.score;
+  }
+};
+
 $("document").ready( function() {
   
   // Global Dice Variables
@@ -14,7 +28,7 @@ $("document").ready( function() {
   
   // Event: The initial dice roll when document ready
   rollDice($( "#diceCount" ).val() );
-  generateDice();
+  drawDice();
 
   // Event: When the slider input changes
   $( "#slider" ).bind( "change", function(event, ui) {
@@ -26,13 +40,13 @@ $("document").ready( function() {
   $("#dw-rolldice").click( function() { 
     $( "#dw-table" ).effect( "shake", { times:4, distance:8 }, 50 );
     rollDice($( "#diceCount" ).val() );
-    generateDice(); 
+    drawDice(); 
   });
   
   // Event: When the viewport changes
   $(window).resize(function() {
     if (diceValues.length > 0) {
-      generateDice(); 
+      drawDice(); 
     }
   });
   
@@ -121,23 +135,33 @@ $("document").ready( function() {
   	}
   } //end of drawDice function
 
+  // updateDice: ensures the dice array has the right count of dice
+  function updateDice(diceCount) {
+    if(diceCount < diceValues.length) {
+      diceValues = diceValues.slice(0, diceCount);
+    } else if(diceCount > diceValues.length) {
+      var newCount = diceCount - diceValues.length;
+      for(var n = 0; n < newCount; n++) {
+        diceValues.push(new Die());
+      }
+    }
+    // else length matches, nothing to do
+  }
+
   //////////////////////////////////////////////////////
   // rollDice: Takes a number of dice to roll         //
   //           and updates anarray of their values    //
   //////////////////////////////////////////////////////
-  function rollDice(diceCount) {
-    diceValues.length = 0;
-    for (var n = 0; n < diceCount; n++) {
-      diceValues.push(Math.floor((Math.random()*6)+1));
-    }
-    diceValues.sort(function(a,b){return b-a});
+  function rollDice() {
+    diceValues.forEach(function(d){d.roll();});
+    diceValues.sort(function(a,b){return a.compareTo(b);});
   }
 
   //////////////////////////////////////////////////////
-  // generateDice: Loops through the dice value array //
+  // drawDice: Loops through the dice value array //
   //               and sends command to draw each die //
   //////////////////////////////////////////////////////
-  function generateDice() {
+  function drawDice() {
     $('#dw-table').empty();
     var dieSize = checkViewport();
     for (var n = 0; n < diceValues.length; n++) {
