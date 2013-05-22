@@ -1,6 +1,6 @@
 /* Copyright Lord Rex 2012-2013 */
 var colorSchemes = [{name:'white', pips:'#000000', face:'#fafdfb'},
-{name:'red', pips:'#ffffff', face:'#990000'},
+{name:'red', pips:'#ffffff', face:'#BB0000'},
 {name:'green', pips:'#ffffff', face:'#009900'}
 ];
 
@@ -71,6 +71,7 @@ $("document").ready( function() {
   		$( "#diceCount" ).val( $("#slider").val() );
   		$( "#sliderCount" ).html( $("#slider").val() );
      updateDice($( "#diceCount" ).val());
+     drawDice();
   });
   
   // Event: When the dice button is clicked
