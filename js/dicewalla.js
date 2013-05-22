@@ -1,15 +1,38 @@
 /* Copyright Lord Rex 2012-2013 */
+var $diceId = 0;
 
 function Die() {
+  this.id = $diceId++;
+console.log("creating die", this.id);
   this.score = 0;
+  this.selected = false;
+  this.pclr = '#000000';
+  this.rotation = (Math.random()-.5)*(Math.PI / 180) * 20;
+  this.needsRedraw = false;
 }
 
 Die.prototype = {
   roll: function() {
+    this.score = Math.floor((Math.random()*6)+1);
+    this.selected = false;
   },
 
   compareTo: function(other) {
     return other.score - this.score;
+  },
+
+  pipColor: function(value) {
+    if(value !== undefined) {
+      this.pclr = value;
+    }
+    return this.pclr;
+  },
+  
+  setSelected: function(value) {
+    if(value != this.selected) {
+      this.needsRedraw = true;
+    }
+    this.selected = value;
   }
 };
 
@@ -21,25 +44,29 @@ $("document").ready( function() {
   $( "#diceCount" ).val( initialDice );
   $( "#sliderCount" ).html( initialDice );
   $( "#slider" ).val( initialDice );  
+
   
   //////////////////////////////////////////////////////
   // EVENT HANDLERS                                   //
   //////////////////////////////////////////////////////
   
   // Event: The initial dice roll when document ready
-  rollDice($( "#diceCount" ).val() );
+  updateDice($( "#diceCount" ).val() );
+  rollDice();
   drawDice();
 
   // Event: When the slider input changes
   $( "#slider" ).bind( "change", function(event, ui) {
   		$( "#diceCount" ).val( $("#slider").val() );
   		$( "#sliderCount" ).html( $("#slider").val() );
+     updateDice($( "#diceCount" ).val());
   });
   
   // Event: When the dice button is clicked
   $("#dw-rolldice").click( function() { 
     $( "#dw-table" ).effect( "shake", { times:4, distance:8 }, 50 );
-    rollDice($( "#diceCount" ).val() );
+    updateDice($( "#diceCount" ).val());
+    rollDice();
     drawDice(); 
   });
   
@@ -52,46 +79,58 @@ $("document").ready( function() {
   
   
   //////////////////////////////////////////////////////
-  // drawDice: Make one die and add it to the screen  //
+  // drawDie: Make one die and add it to the screen  //
   //////////////////////////////////////////////////////
-  function drawDice(diceBox,pipCount) {
-  
+  function drawDie(diceBox, d, redraw) {
+    if(redraw && !d.needsRedraw) {
+      return;
+    } 
     //Class to represent dice
-    function die(diceBox,pipCount) {
-      this.pipColor =  "#222222";
-      this.pipCount = pipCount;
+    function drawabledie(diceBox,d) {
+      this.pipColor = d.pipColor();
+      this.pipCount = d.score;
       this.diceSize = function(){ return diceBox * .7; }
       this.diceMargin = function() { return diceBox * .15; }
       this.pipSize = function() { return this.diceSize() / 10; }
+      this.rotation = d.rotation;
     }
   
     //Data - The dice
-    var $dice = new die(diceBox,pipCount);
+    var $dice = new drawabledie(diceBox,d);
     
     // Behaviors
-    var $canvas = $('<canvas>Your browser does not support HTML5 Canvas</canvas>');
-    $canvas.attr('width',diceBox).attr('height',diceBox);
+    var $canvas;
+    if(redraw) {
+      $canvas = $('#d_' + d.id);
+      $canvas[0].width = $canvas[0].width; // force a complete reset/clear
+    } else {
+    $canvas = $('<canvas>Your browser does not support HTML5 Canvas</canvas>');
+    $canvas.attr('width',diceBox).attr('height',diceBox).attr('id', 'd_' + d.id);
     $('#dw-table').append($canvas);
-    $context = $('#dw-table canvas:last-child')[0].getContext('2d');
-    
+    }
+    $context = $canvas[0].getContext('2d');
+   console.log("drawing die", $dice, d); 
   	//Draw the basic dice shape and shadow
   	if($context != null) {
-  	  //alert($dice.diceSize());
-    	var radian = (Math.PI / 180) * 20;
     	$context.translate($dice.diceMargin(),$dice.diceMargin());
-    	$context.rotate((Math.random()-.5)*radian);
+    	$context.rotate($dice.rotation);
     	$context.fillStyle = "#fafdfb";
     	$context.strokeStyle = "#444444"; 
     	$context.lineJoin = "round"; 
     	$context.shadowColor = "#443333"; 
+        if(d.selected) {
+          $context.shadowColor = "#FF0000";
+        }
     	$context.save();
     	$context.shadowOffsetX = 1;
     	$context.shadowOffsetY = 1;
     	$context.shadowBlur = 6; 
-    	$context.fillRect(0, 0, $dice.diceSize(), $dice.diceSize());
+    	if(d.selected) {
+          $context.shadowBlur = 13;
+        }
+        $context.fillRect(0, 0, $dice.diceSize(), $dice.diceSize());
     	$context.restore();
     	$context.strokeRect(0, 0, $dice.diceSize(), $dice.diceSize());
-    	
     	//Draw 1-6 pips
     	if($dice.pipCount == 1) {
     	  drawPip($dice.diceSize()*(.4), $dice.diceSize()*(.4));
@@ -133,6 +172,7 @@ $("document").ready( function() {
   		$context.arc(pipX+$dice.pipSize(), pipY+$dice.pipSize(), $dice.pipSize(), 0, 2*Math.PI);
   		$context.fill();
   	}
+    d.needsRedraw = false;
   } //end of drawDice function
 
   // updateDice: ensures the dice array has the right count of dice
@@ -152,8 +192,12 @@ $("document").ready( function() {
   // rollDice: Takes a number of dice to roll         //
   //           and updates anarray of their values    //
   //////////////////////////////////////////////////////
-  function rollDice() {
-    diceValues.forEach(function(d){d.roll();});
+  function rollDice(isReroll) {
+    diceValues.forEach(function(d){
+      if(!isReroll || d.selected) {
+        d.roll();
+      }
+    });
     diceValues.sort(function(a,b){return a.compareTo(b);});
   }
 
@@ -165,7 +209,14 @@ $("document").ready( function() {
     $('#dw-table').empty();
     var dieSize = checkViewport();
     for (var n = 0; n < diceValues.length; n++) {
-  	  drawDice(dieSize, diceValues[n]);
+  	  drawDie(dieSize, diceValues[n]);
+    }
+  }
+
+  function redraw() {
+    var dieSize = checkViewport();
+    for (var n = 0; n < diceValues.length; n++) {
+          drawDie(dieSize, diceValues[n], true);
     }
   }
 
@@ -175,5 +226,130 @@ $("document").ready( function() {
     return diceBox;
   }
 
+  $('#dw-reroll').click(function() {
+    rollDice(true);
+    drawDice();
+    $('#dw-selections').hide();
+  });
 
+  $('#dw-discard').click(function() {
+    $('canvas.dw-selected').remove();
+    for(var n = 0; n < diceValues.length;) {
+      if(diceValues[n].selected) {
+        diceValues.splice(n, 1);
+      } else {
+       n++;
+      }
+    }
+    $( "#slider" ).val( diceValues.length );
+    $( "#diceCount" ).val( diceValues.length );
+    $( "#sliderCount" ).html( diceValues.length );
+    $( "#dw-selections" ).hide();
+  });
+
+  // mouse/touch handling
+  $('#dw-table').on({
+    mousedown: function(evt) {
+      mouseDown(this, evt);
+    },
+    mousemove: function(evt) {
+      mouseMove(this, evt);
+    },
+    mouseup: function(evt) {
+      mouseUp(this, evt);
+    }
+  }, 'canvas');
+
+  var isDown = false;
+  var selecting = false;
+  var start = {};
+  var LONG_PRESS_TIME = 700; // ms
+  var DRAG_DELTA = 20; // manhattan pixels
+  var longPressTimer;
+
+  function getMouse(elmt, evt) {
+      var idx = -1;
+      if(idmatch = elmt.id.match(/d_(\d+)/)) {
+        idx = parseInt(idmatch[1]);
+      }
+      var mx = evt.pageX;
+      var my = evt.pageY;
+      return {x: mx, y: my, d: idx};
+  }
+
+  function mouseDown(elmt, evt) {
+    evt.preventDefault();
+    isDown = true;
+    selecting = false;
+    start = getMouse(elmt, evt);
+    longPressTimer = window.setTimeout(checkLongPress, LONG_PRESS_TIME);
+  }
+
+  // calculate manhattan distance between points
+  function distance(pos1, pos2) {
+    return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y);
+  }
+
+  function mouseMove(elmt, evt) {
+    evt.preventDefault();
+    if(isDown) {
+      newPos = getMouse(elmt, evt);
+      if(distance(start, newPos) >= DRAG_DELTA) {
+        selecting = true;
+        clearTimeout(longPressTimer);
+        markSelection(start, newPos);
+      }
+    }
+  }
+
+  function mouseUp(elmt, evt) {
+    evt.preventDefault();
+    isDown = false;
+    clearTimeout(longPressTimer);
+    if(!selecting) {
+      doClick(start);
+    }
+  }
+
+  function checkLongPress() {
+    if(isDown) {
+      selecting = true;
+      markSelection(start);
+    }
+  }
+ 
+  function markSelection(pos, pos2) {
+      var a = -1;
+      var b = -1;
+      for(var n = 0; n < diceValues.length; n++) {
+        var id = diceValues[n].id;
+        if(id == pos.d || (pos2 && id == pos2.d)) {
+          if(a == -1) {
+            a = n;
+          } else {
+            b = n;
+          }
+        }
+      }
+      if(b == -1) {
+        b = a;
+      }
+    var s = Math.min(a, b);
+    var e = Math.max(a, b);
+    for(var i = 0; i < diceValues.length; i++) {
+      if(i >= s && i <= e) {
+      diceValues[i].setSelected(true);
+      $('#d_' + diceValues[i].id).addClass('dw-selected');
+      } else {
+              diceValues[i].setSelected(false);
+      $('#d_' + diceValues[i].id).removeClass('dw-selected');
+      }
+    }
+    redraw();
+    $('#dw-selections').show();
+  }
+  
+  function doClick(pos) {
+    console.log("doClick: ", pos);
+  }
 });

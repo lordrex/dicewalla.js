@@ -21,7 +21,7 @@ body {
   padding: 20px 0;
 }
 
-.hide { visibility: hidden; }
+.hide { display:none; }
 
 
 
@@ -37,7 +37,7 @@ body {
   padding: 20px 0;
 }
 
-#dw-rolldice {
+.dw-button {
 -moz-box-shadow:inset 0px 1px 0px 0px #a4e271;
 	-webkit-box-shadow:inset 0px 1px 0px 0px #a4e271;
 	box-shadow:inset 0px 1px 0px 0px #a4e271;
@@ -58,13 +58,13 @@ body {
 	text-decoration:none;
 	text-shadow:1px 1px 0px #528009;
 }
-#dw-rolldice:hover {
+.dw-button:hover {
 	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #77a809), color-stop(1, #89c403) );
 	background:-moz-linear-gradient( center top, #77a809 5%, #89c403 100% );
 	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#77a809', endColorstr='#89c403');
 	background-color:#77a809;
 }
-#dw-rolldice:active {
+.dw-button:active {
 	position:relative;
 	top:1px;
 }
