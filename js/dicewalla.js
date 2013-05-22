@@ -1,4 +1,9 @@
 /* Copyright Lord Rex 2012-2013 */
+var colorSchemes = [{name:'white', pips:'#000000', face:'#fafdfb'},
+{name:'red', pips:'#ffffff', face:'#990000'},
+{name:'green', pips:'#ffffff', face:'#009900'}
+];
+
 var $diceId = 0;
 
 function Die() {
@@ -6,7 +11,7 @@ function Die() {
 console.log("creating die", this.id);
   this.score = 0;
   this.selected = false;
-  this.pclr = '#000000';
+  this.pclr = 0;
   this.rotation = (Math.random()-.5)*(Math.PI / 180) * 20;
   this.needsRedraw = false;
 }
@@ -21,11 +26,12 @@ Die.prototype = {
     return other.score - this.score;
   },
 
-  pipColor: function(value) {
-    if(value !== undefined) {
-      this.pclr = value;
-    }
-    return this.pclr;
+  pipColor: function() {
+    return colorSchemes[this.pclr].pips;
+  },
+  
+  faceColor: function() {
+    return colorSchemes[this.pclr].face;
   },
   
   setSelected: function(value) {
@@ -33,6 +39,11 @@ Die.prototype = {
       this.needsRedraw = true;
     }
     this.selected = value;
+  },
+
+  nextColor: function() {
+    this.pclr = (this.pclr + 1) % colorSchemes.length;
+    this.needsRedraw = true;
   }
 };
 
@@ -88,6 +99,7 @@ $("document").ready( function() {
     //Class to represent dice
     function drawabledie(diceBox,d) {
       this.pipColor = d.pipColor();
+      this.faceColor = d.faceColor();
       this.pipCount = d.score;
       this.diceSize = function(){ return diceBox * .7; }
       this.diceMargin = function() { return diceBox * .15; }
@@ -114,7 +126,7 @@ $("document").ready( function() {
   	if($context != null) {
     	$context.translate($dice.diceMargin(),$dice.diceMargin());
     	$context.rotate($dice.rotation);
-    	$context.fillStyle = "#fafdfb";
+    	$context.fillStyle = $dice.faceColor;
     	$context.strokeStyle = "#444444"; 
     	$context.lineJoin = "round"; 
     	$context.shadowColor = "#443333"; 
@@ -255,10 +267,11 @@ $("document").ready( function() {
     mousemove: function(evt) {
       mouseMove(this, evt);
     },
-    mouseup: function(evt) {
-      mouseUp(this, evt);
-    }
+    mouseup: function(evt) { mouseUp(this, evt);}
   }, 'canvas');
+
+// ensure the mouse state is cleaned up
+  $('body').on('mouseup', function(evt){ isDown = false; });
 
   var isDown = false;
   var selecting = false;
@@ -351,5 +364,11 @@ $("document").ready( function() {
   
   function doClick(pos) {
     console.log("doClick: ", pos);
+    for(var n = 0; n < diceValues.length; n++) {
+      if(diceValues[n].id == pos.d) {
+        diceValues[n].nextColor();
+      }
+    }
+    redraw();
   }
 });
