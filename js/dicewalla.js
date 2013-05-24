@@ -8,7 +8,6 @@ var $diceId = 0;
 
 function Die() {
   this.id = $diceId++;
-console.log("creating die", this.id);
   this.score = 0;
   this.selected = false;
   this.pclr = 0;
@@ -122,7 +121,6 @@ $("document").ready( function() {
     $('#dw-table').append($canvas);
     }
     $context = $canvas[0].getContext('2d');
-   console.log("drawing die", $dice, d); 
   	//Draw the basic dice shape and shadow
   	if($context != null) {
     	$context.translate($dice.diceMargin(),$dice.diceMargin());
@@ -262,6 +260,18 @@ $("document").ready( function() {
 
   // mouse/touch handling
   $('#dw-table').on({
+    touchstart: function(evt) {
+      mouseDown(this, evt);
+    },
+    touchmove: function(evt) {
+      mouseMove(this, evt);
+    },
+    touchend: function(evt) {
+      mouseUp(this, evt);
+    },
+    touchcancel: function(evt) {
+      mouseUp(this, evt);
+    },
     mousedown: function(evt) {
       mouseDown(this, evt);
     },
@@ -282,12 +292,19 @@ $("document").ready( function() {
   var longPressTimer;
 
   function getMouse(elmt, evt) {
+      var mx = evt.clientX;
+      var my = evt.clientY;
+console.log("getMouse: ", elmt.id, evt);
+      if(evt.originalEvent.touches) {
+        mx = evt.originalEvent.touches[0].clientX;
+        my = evt.originalEvent.touches[0].clientY;
+        elmt = document.elementFromPoint(mx, my);
+      }
+
       var idx = -1;
       if(idmatch = elmt.id.match(/d_(\d+)/)) {
         idx = parseInt(idmatch[1]);
       }
-      var mx = evt.pageX;
-      var my = evt.pageY;
       return {x: mx, y: my, d: idx};
   }
 
@@ -320,7 +337,7 @@ $("document").ready( function() {
     evt.preventDefault();
     isDown = false;
     clearTimeout(longPressTimer);
-    if(!selecting) {
+    if(!selecting && "touchcancel" != evt.type) {
       doClick(start);
     }
   }
@@ -364,7 +381,6 @@ $("document").ready( function() {
   }
   
   function doClick(pos) {
-    console.log("doClick: ", pos);
     for(var n = 0; n < diceValues.length; n++) {
       if(diceValues[n].id == pos.d) {
         diceValues[n].nextColor();
