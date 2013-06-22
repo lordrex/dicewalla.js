@@ -22,7 +22,7 @@
     </div>
     
     <!-- Link to roll the dice -->
-    <a id="dw-rolldice">Roll <span id="sliderCount"></span> Dice</a>
+    <a id="dw-rolldice" class="dw-button">Roll <span id="sliderCount"></span> Dice</a>
   </section>
   
   <!-- section that contains the dice -->
@@ -33,5 +33,10 @@
   <!-- Hidden input to hold a data value -->
   <input type="hidden" id="diceCount" value="6" />
 
+  <!-- controls that operate on selection -->
+  <section id="dw-selections" class="hide">
+    <a id="dw-reroll" class="dw-button">Reroll selected</a>
+    <a id="dw-discard" class="dw-button">Discard selected</a>
+  </section>
 </body>
 </html>
